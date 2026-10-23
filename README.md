@@ -157,3 +157,12 @@ quick-gif/
    ├─ core/                # @quick-gif/core
    └─ ui/                  # @quick-gif/ui  (+ ui/src/edit)
 ```
+
+---
+
+## License
+
+Licensed under the **GNU Affero General Public License v3.0** (AGPL-3.0-only) —
+see [`LICENSE`](./LICENSE). In short: you may use, modify, and redistribute it,
+but if you run a modified version as a network service, you must offer its
+source to that service's users.

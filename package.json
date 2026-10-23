@@ -2,6 +2,7 @@
   "name": "quick-gif",
   "version": "0.0.0",
   "private": true,
+  "license": "AGPL-3.0-only",
   "scripts": {
     "dev:web": "pnpm --filter quick-gif-web-app dev",
     "dev:wasm": "pnpm --filter quick-gif-wasm-web dev",
