@@ -29,6 +29,42 @@ Notes:
   file for their grid thumbnail — this is expected, not a bug.
 - Install with: `pnpm` (npm/yarn are not supported; see `packageManager`).
 
+### Installing ffmpeg + ffprobe (native app only)
+
+`ffprobe` ships inside the same package as `ffmpeg` on every mainstream
+distribution, so installing ffmpeg gives you both. Pick your OS:
+
+**macOS**
+```bash
+brew install ffmpeg          # Homebrew
+# or: sudo port install ffmpeg   # MacPorts
+```
+
+**Windows** (run in an elevated terminal; reopen the shell afterwards so `PATH` updates)
+```powershell
+winget install Gyan.FFmpeg    # winget (built-in on Win 10/11)
+# or: choco install ffmpeg     # Chocolatey
+# or: scoop install ffmpeg     # Scoop
+```
+Prefer a manual install? Grab a build from <https://www.gyan.dev/ffmpeg/builds/>
+or <https://github.com/BtbN/FFmpeg-Builds/releases>, unzip it, and add the `bin`
+folder (containing `ffmpeg.exe` and `ffprobe.exe`) to your `PATH`.
+
+**Linux**
+```bash
+sudo apt install ffmpeg       # Debian / Ubuntu
+sudo dnf install ffmpeg       # Fedora (enable RPM Fusion first)
+sudo pacman -S ffmpeg         # Arch
+```
+
+**Any OS** — official download index: <https://ffmpeg.org/download.html>
+
+Verify both are found before running the native app:
+```bash
+ffmpeg -version
+ffprobe -version
+```
+
 ---
 
 ## Getting started
