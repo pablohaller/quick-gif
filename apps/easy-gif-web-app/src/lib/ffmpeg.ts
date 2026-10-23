@@ -4,14 +4,14 @@ import { createHash } from "crypto";
 import os from "os";
 import path from "path";
 import { promisify } from "util";
-import type {
-  ColorFilter,
-  ExportParams,
-  ExportResult,
-  OutputFormat,
-  SourceKind,
-  VideoMeta,
-} from "@/lib/types";
+import {
+  buildPreChain,
+  dimsAt,
+  extFor,
+  fitDimensions,
+  singlePassGifChain,
+} from "@easy-gif/core";
+import type { ExportParams, ExportResult, SourceKind, VideoMeta } from "@/lib/types";
 import type { Settings } from "@/lib/settings";
 import { cacheKey, readMeta, writeMeta, UPLOADS_DIR } from "@/lib/cache";
 
@@ -25,8 +25,6 @@ const VIDEO_EXTENSIONS = [".mp4", ".webm", ".mov", ".mkv", ".avi", ".m4v"];
 
 // Output extensions we recognise in the outputs folder (dedup, listing, naming).
 export const OUTPUT_EXTENSIONS = [".gif", ".webp"];
-
-const extFor = (format: OutputFormat) => (format === "webp" ? "webp" : "gif");
 
 export const isVideo = (name: string) =>
   VIDEO_EXTENSIONS.includes(path.extname(name).toLowerCase());
@@ -86,27 +84,10 @@ export const probeCached = async (
 };
 
 // ---------------------------------------------------------------------------
-// Filtergraph: crop -> fps -> scale -> color -> text -> palette.
+// Filtergraph: crop -> fps -> scale -> color -> text -> palette. The shared
+// builder lives in @easy-gif/core; here we resolve a concrete system font for
+// drawtext and append the native single-pass GIF palette.
 // ---------------------------------------------------------------------------
-const hexToRgb01 = (hex: string): [number, number, number] => {
-  const h = hex.replace(/^#/, "");
-  const n = parseInt(h.length === 3 ? h.replace(/(.)/g, "$1$1") : h, 16);
-  return [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255];
-};
-
-// Single-stream color filter. multiply: out = in * color.  screen:
-// out = in*(1-color) + color (uses colorchannelmixer's alpha coefficient as the
-// constant term, since opaque video has alpha = 1).
-const colorFilter = (filter: ColorFilter): string | null => {
-  if (filter.mode === "none") return null;
-  if (filter.mode === "grayscale") return "hue=s=0";
-  const [r, g, b] = hexToRgb01(filter.color);
-  const f = (n: number) => n.toFixed(4);
-  if (filter.mode === "multiply") {
-    return `colorchannelmixer=rr=${f(r)}:gg=${f(g)}:bb=${f(b)}`;
-  }
-  return `colorchannelmixer=rr=${f(1 - r)}:ra=${f(r)}:gg=${f(1 - g)}:ga=${f(g)}:bb=${f(1 - b)}:ba=${f(b)}`;
-};
 
 // First existing font wins; drawtext needs a concrete file on macOS.
 const FONT_CANDIDATES = [
@@ -127,63 +108,8 @@ const findFont = async (): Promise<string | null> => {
   return null;
 };
 
-const escapeDrawtext = (text: string) =>
-  text.replace(/[\\:',%[\]]/g, (c) => `\\${c}`).replace(/[\r\n]/g, " ");
-
-const ffColor = (hex: string, opacity: number) => {
-  const h = hex.replace(/^#/, "");
-  const a = Math.max(0, Math.min(1, opacity)).toFixed(2);
-  return `0x${h}@${a}`;
-};
-
-// One drawtext per text layer, remapped from normalized full-frame coordinates
-// into the cropped+scaled output (layers outside the crop are clipped).
-const textFilters = (
-  params: ExportParams,
-  finalWidth: number,
-  finalHeight: number,
-  fontFile: string,
-): string[] => {
-  const cx = params.crop?.x ?? 0;
-  const cy = params.crop?.y ?? 0;
-  const cw = params.crop?.w ?? 1;
-  const ch = params.crop?.h ?? 1;
-  return params.texts
-    .filter((layer) => layer.text.trim())
-    .map((layer) => {
-      const text = escapeDrawtext(layer.text.trim());
-      const x = Math.round(((layer.x - cx) / cw) * finalWidth);
-      const y = Math.round(((layer.y - cy) / ch) * finalHeight);
-      const fontsize = Math.max(1, Math.round((layer.size * finalHeight) / ch));
-      return `drawtext=fontfile=${fontFile}:text='${text}':fontsize=${fontsize}:fontcolor=${ffColor(layer.color, layer.opacity)}:x=${x}:y=${y}`;
-    });
-};
-
-const even = (n: number) => Math.max(2, Math.round(n / 2) * 2);
-
-// Fit-to-box dimensions: scale the (cropped) source down to fit inside the
-// optional max width/height, aspect preserved, never upscaled. 0/unset = no cap.
-const fitDimensions = (params: ExportParams, meta: VideoMeta) => {
-  const srcW = params.crop
-    ? Math.max(2, Math.round(params.crop.w * meta.width))
-    : meta.width;
-  const srcH = params.crop
-    ? Math.max(2, Math.round(params.crop.h * meta.height))
-    : meta.height;
-  const capW = params.width ? Math.min(params.width, srcW) : undefined;
-  const capH = params.height ? Math.min(params.height, srcH) : undefined;
-  let factor = 1;
-  if (capW !== undefined && capH !== undefined) factor = Math.min(capW / srcW, capH / srcH);
-  else if (capW !== undefined) factor = capW / srcW;
-  else if (capH !== undefined) factor = capH / srcH;
-  return { srcW, srcH, factor };
-};
-
-const dimsAt = (srcW: number, srcH: number, factor: number, multiplier: number) => ({
-  width: even(srcW * factor * multiplier),
-  height: even(srcH * factor * multiplier),
-});
-
+// Full native chain: the shared pre-chain, plus the single-pass GIF palette
+// (WebP is full-colour, so the pre-chain is enough on its own).
 const buildFilterChain = (
   params: ExportParams,
   meta: VideoMeta,
@@ -191,28 +117,8 @@ const buildFilterChain = (
   finalHeight: number,
   fontFile: string | null,
 ): string => {
-  const parts: string[] = [];
-
-  if (params.crop) {
-    const cw = Math.max(2, Math.round(params.crop.w * meta.width));
-    const ch = Math.max(2, Math.round(params.crop.h * meta.height));
-    const cx = Math.max(0, Math.round(params.crop.x * meta.width));
-    const cy = Math.max(0, Math.round(params.crop.y * meta.height));
-    parts.push(`crop=${cw}:${ch}:${cx}:${cy}`);
-  }
-
-  if (params.fps) parts.push(`fps=${params.fps}`);
-  parts.push(`scale=${finalWidth}:${finalHeight}:flags=lanczos`);
-
-  const color = colorFilter(params.filter);
-  if (color) parts.push(color);
-
-  if (fontFile) parts.push(...textFilters(params, finalWidth, finalHeight, fontFile));
-
-  const pre = parts.join(",");
-  // GIF needs a generated palette; WebP is full-colour, so the prefix is enough.
-  if (params.format === "webp") return pre;
-  return `${pre},split[s0][s1];[s0]palettegen=stats_mode=diff[p];[s1][p]paletteuse=dither=bayer`;
+  const pre = buildPreChain(params, meta, finalWidth, finalHeight, fontFile);
+  return params.format === "webp" ? pre : singlePassGifChain(pre);
 };
 
 // WebP quality for the lossy encoder. ~75 is a good size/quality balance.

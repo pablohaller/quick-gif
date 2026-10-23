@@ -1,5 +1,5 @@
-import { extFor } from "@/lib/naming";
-import type { ColorFilter, ExportParams, ExportResult, VideoMeta } from "@/lib/types";
+import { buildPreChain, dimsAt, extFor, fitDimensions } from "@easy-gif/core";
+import type { ExportParams, ExportResult, VideoMeta } from "@/lib/types";
 
 // ---------------------------------------------------------------------------
 // ffmpeg.wasm loader.
@@ -129,96 +129,6 @@ const ensureFont = async (ff: FFmpegInstance): Promise<boolean> => {
   }
 };
 
-// ---------------------------------------------------------------------------
-// Filtergraph. Order is: crop -> fps -> scale -> color -> text -> palette.
-// ---------------------------------------------------------------------------
-const hexToRgb01 = (hex: string): [number, number, number] => {
-  const h = hex.replace(/^#/, "");
-  const n = parseInt(h.length === 3 ? h.replace(/(.)/g, "$1$1") : h, 16);
-  return [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255];
-};
-
-// A single-stream color filter. multiply: out = in * color.  screen:
-// out = in*(1-color) + color (uses colorchannelmixer's alpha coefficient as the
-// constant term, since opaque video has alpha = 1).
-const colorFilter = (filter: ColorFilter): string | null => {
-  if (filter.mode === "none") return null;
-  if (filter.mode === "grayscale") return "hue=s=0";
-  const [r, g, b] = hexToRgb01(filter.color);
-  const f = (n: number) => n.toFixed(4);
-  if (filter.mode === "multiply") {
-    return `colorchannelmixer=rr=${f(r)}:gg=${f(g)}:bb=${f(b)}`;
-  }
-  // screen
-  return `colorchannelmixer=rr=${f(1 - r)}:ra=${f(r)}:gg=${f(1 - g)}:ga=${f(g)}:bb=${f(1 - b)}:ba=${f(b)}`;
-};
-
-const escapeDrawtext = (text: string) =>
-  text.replace(/[\\:',%[\]]/g, (c) => `\\${c}`).replace(/[\r\n]/g, " ");
-
-// ffmpeg drawtext colour: #rrggbb -> 0xrrggbb@alpha.
-const ffColor = (hex: string, opacity: number) => {
-  const h = hex.replace(/^#/, "");
-  const a = Math.max(0, Math.min(1, opacity)).toFixed(2);
-  return `0x${h}@${a}`;
-};
-
-// Build one drawtext per text layer. Positions/size are normalized to the full
-// frame, so they are remapped into the cropped+scaled output space. Text outside
-// the crop lands off-canvas and is naturally clipped ("inside the area" only).
-const textFilters = (
-  params: ExportParams,
-  finalWidth: number,
-  finalHeight: number,
-): string[] => {
-  const cx = params.crop?.x ?? 0;
-  const cy = params.crop?.y ?? 0;
-  const cw = params.crop?.w ?? 1;
-  const ch = params.crop?.h ?? 1;
-  return params.texts
-    .filter((layer) => layer.text.trim())
-    .map((layer) => {
-      const text = escapeDrawtext(layer.text.trim());
-      const x = Math.round(((layer.x - cx) / cw) * finalWidth);
-      const y = Math.round(((layer.y - cy) / ch) * finalHeight);
-      const fontsize = Math.max(1, Math.round((layer.size * finalHeight) / ch));
-      return `drawtext=fontfile=${FONT_FILE}:text='${text}':fontsize=${fontsize}:fontcolor=${ffColor(layer.color, layer.opacity)}:x=${x}:y=${y}`;
-    });
-};
-
-// The "pre" chain (crop -> fps -> scale -> color -> text), WITHOUT the GIF
-// palette step. GIF appends the palette in a separate pass (see renderOnce).
-const buildPreChain = (
-  params: ExportParams,
-  meta: VideoMeta,
-  finalWidth: number,
-  finalHeight: number,
-  hasFont: boolean,
-): string => {
-  const parts: string[] = [];
-
-  if (params.crop) {
-    const cw = Math.max(2, Math.round(params.crop.w * meta.width));
-    const ch = Math.max(2, Math.round(params.crop.h * meta.height));
-    const cx = Math.max(0, Math.round(params.crop.x * meta.width));
-    const cy = Math.max(0, Math.round(params.crop.y * meta.height));
-    parts.push(`crop=${cw}:${ch}:${cx}:${cy}`);
-  }
-
-  // fps is optional — omit to keep the source frame rate.
-  if (params.fps !== undefined) parts.push(`fps=${params.fps}`);
-  // Dimensions are computed in JS (aspect-correct, never upscaled), so scale to
-  // the explicit target.
-  parts.push(`scale=${finalWidth}:${finalHeight}:flags=lanczos`);
-
-  const color = colorFilter(params.filter);
-  if (color) parts.push(color);
-
-  if (hasFont) parts.push(...textFilters(params, finalWidth, finalHeight));
-
-  return parts.join(",");
-};
-
 const WEBP_QUALITY = 75;
 
 // -ss before -i (fast input seek); -t as an OUTPUT option (unambiguous length).
@@ -291,47 +201,6 @@ const renderOnce = async (
   return data;
 };
 
-const even = (n: number) => Math.max(2, Math.round(n / 2) * 2);
-
-// Fit-to-box dimensions: scale the (cropped) source down to fit inside the
-// optional max width/height while preserving aspect ratio, never upscaling.
-// Returns the source size and a single scale factor (≤ 1) so the auto-downscale
-// loop can shrink both axes proportionally.
-const fitDimensions = (params: ExportParams, meta: VideoMeta) => {
-  const srcW = params.crop
-    ? Math.max(2, Math.round(params.crop.w * meta.width))
-    : meta.width;
-  const srcH = params.crop
-    ? Math.max(2, Math.round(params.crop.h * meta.height))
-    : meta.height;
-
-  // A value of 0 (or unset) means "no cap on that axis" — keep the source size.
-  const capW = params.width ? Math.min(params.width, srcW) : undefined;
-  const capH = params.height ? Math.min(params.height, srcH) : undefined;
-
-  let factor = 1;
-  if (capW !== undefined && capH !== undefined) {
-    factor = Math.min(capW / srcW, capH / srcH);
-  } else if (capW !== undefined) {
-    factor = capW / srcW;
-  } else if (capH !== undefined) {
-    factor = capH / srcH;
-  }
-
-  return { srcW, srcH, factor };
-};
-
-// Final even width/height at an extra downscale multiplier (1 = none).
-const dimsAt = (
-  srcW: number,
-  srcH: number,
-  factor: number,
-  multiplier: number,
-) => ({
-  width: even(srcW * factor * multiplier),
-  height: even(srcH * factor * multiplier),
-});
-
 const INPUT_FILE = "input";
 
 // Write the source video into the wasm FS once; subsequent renders reuse it.
@@ -357,7 +226,7 @@ export const estimateSize = async (
       : false;
     const { srcW, srcH, factor } = fitDimensions(params, meta);
     const { width, height } = dimsAt(srcW, srcH, factor, 1);
-    const pre = buildPreChain(params, meta, width, height, hasFont);
+    const pre = buildPreChain(params, meta, width, height, hasFont ? FONT_FILE : null);
     const data = await renderOnce(ff, input, params, pre);
     return { sizeBytes: data.byteLength, width };
   } finally {
@@ -394,7 +263,7 @@ export const runExport = async (
 
     for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
       dims = dimsAt(srcW, srcH, factor, multiplier);
-      const pre = buildPreChain(params, meta, dims.width, dims.height, hasFont);
+      const pre = buildPreChain(params, meta, dims.width, dims.height, hasFont ? FONT_FILE : null);
       data = await renderOnce(ff, input, params, pre);
       if (!hasBudget || data.byteLength <= maxBytes || !params.autoDownscale) {
         break;
