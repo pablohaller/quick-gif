@@ -12,6 +12,12 @@ import type { ExportParams, ExportResult, VideoMeta } from "@/lib/types";
 // @ffmpeg/ffmpeg) so there is no runtime CDN dependency — the app works offline
 // and never fails because unpkg is slow or blocked.
 //
+// The core wasm is shipped gzipped (ffmpeg-core.wasm.gz, ~10 MiB) rather than
+// raw (~31 MiB): some static hosts (Cloudflare Pages) reject single assets over
+// 25 MiB. We decompress it in the browser via DecompressionStream and hand
+// ffmpeg a blob: URL — the same mechanism @ffmpeg/util's toBlobURL uses — so the
+// worker can fetch it same-origin.
+//
 // We must NOT pass `classWorkerURL`: doing so makes the UMD loader spawn the
 // worker as a module worker (`{type:"module"}`), but 814.ffmpeg.js is a classic
 // worker that calls importScripts() — unavailable in module workers. Omitting it
@@ -68,6 +74,21 @@ const loadScript = (src: string): Promise<void> =>
     document.head.appendChild(script);
   });
 
+// Fetch the gzipped core wasm and decompress it to a same-origin blob: URL that
+// ffmpeg's worker can load (emscripten fetches wasmURL itself). gzip keeps the
+// shipped asset under static-host per-file size caps (e.g. Cloudflare Pages).
+const wasmBlobURL = async (): Promise<string> => {
+  const res = await fetch(`${CORE_BASE}/ffmpeg-core.wasm.gz`);
+  if (!res.ok || !res.body) {
+    throw new Error(`Failed to fetch ffmpeg core wasm (${res.status})`);
+  }
+  const stream = res.body.pipeThrough(new DecompressionStream("gzip"));
+  const blob = await new Response(stream, {
+    headers: { "Content-Type": "application/wasm" },
+  }).blob();
+  return URL.createObjectURL(blob);
+};
+
 let instance: FFmpegInstance | null = null;
 let loading: Promise<FFmpegInstance> | null = null;
 
@@ -107,7 +128,7 @@ export const loadFfmpeg = (
       const origin = window.location.origin;
       await ff.load({
         coreURL: `${origin}${CORE_BASE}/ffmpeg-core.js`,
-        wasmURL: `${origin}${CORE_BASE}/ffmpeg-core.wasm`,
+        wasmURL: await wasmBlobURL(),
       });
       instance = ff;
       return ff;

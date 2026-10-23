@@ -97,9 +97,15 @@ A few deliberate choices in `src/lib/engine.ts`:
 
 - **Self-hosted assets.** `public/ffmpeg/` contains the UMD loader
   (`ffmpeg.js`), the worker (`814.ffmpeg.js`), the core (`ffmpeg-core.js` +
-  `ffmpeg-core.wasm`), and a bundled font (`font.ttf`). Nothing is fetched from
-  a CDN at runtime, so it works offline and never breaks when a CDN is slow or
-  blocked.
+  `ffmpeg-core.wasm.gz`), and a bundled font (`font.ttf`). Nothing is fetched
+  from a CDN at runtime, so it works offline and never breaks when a CDN is slow
+  or blocked.
+- **Gzipped core wasm.** The core wasm ships pre-gzipped (`ffmpeg-core.wasm.gz`,
+  ~10 MiB vs ~31 MiB raw) because some static hosts cap single assets at 25 MiB
+  (e.g. Cloudflare Pages). `engine.ts` decompresses it in the browser via
+  `DecompressionStream` and hands ffmpeg a `blob:` URL — the same mechanism
+  `@ffmpeg/util`'s `toBlobURL` uses. To refresh it after upgrading `@ffmpeg/core`:
+  `gzip -9 -c ffmpeg-core.wasm > ffmpeg-core.wasm.gz`.
 - **Loaded via a `<script>` tag, not a bundler import.** The ESM entry of
   `@ffmpeg/ffmpeg` uses `new URL(classWorkerURL, import.meta.url)`, which
   bundlers (Turbopack/webpack) can't statically resolve. Loading the UMD build
@@ -301,9 +307,12 @@ src/
 It's a standard Next.js app with **no server-side logic** and **no secrets**, so
 any Next-capable host works (Vercel, Netlify, a static export behind a CDN, …).
 
-The only requirement is that `public/ffmpeg/*` is served as static files with
-correct MIME types (`application/wasm` for `ffmpeg-core.wasm`). Because the core
-is single-threaded, **no COOP/COEP headers are needed**.
+The only requirement is that `public/ffmpeg/*` is served as static files. The
+core wasm is decompressed client-side from `ffmpeg-core.wasm.gz`, so no special
+MIME type is needed for it (the browser builds the `application/wasm` blob). The
+gzipped core (~10 MiB) also stays under the 25 MiB per-file limit on hosts like
+Cloudflare Pages. Because the core is single-threaded, **no COOP/COEP headers
+are needed**.
 
 ---
 
