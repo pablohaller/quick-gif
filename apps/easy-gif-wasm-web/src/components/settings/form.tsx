@@ -2,10 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Download, Upload } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Field } from "@/components/ui/field";
-import { PresetRow } from "@/components/ui/preset-row";
-import { ToggleRow, inputCls, selectCls } from "@/components/ui/toggle-row";
+import { Button } from "@easy-gif/ui/button";
+import { Field } from "@easy-gif/ui/field";
+import { PresetRow } from "@easy-gif/ui/preset-row";
+import { ToggleRow, inputCls, selectCls } from "@easy-gif/ui/toggle-row";
 import {
   EXAMPLE_SETTINGS,
   FIELD_DEFAULTS,

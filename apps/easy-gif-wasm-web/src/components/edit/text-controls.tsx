@@ -1,10 +1,10 @@
 "use client";
 
 import { Plus, Save, Trash2 } from "lucide-react";
-import { Accordion } from "@/components/ui/accordion";
-import { Button } from "@/components/ui/button";
-import { PresetRow } from "@/components/ui/preset-row";
-import { inputCls } from "@/components/ui/toggle-row";
+import { Accordion } from "@easy-gif/ui/accordion";
+import { Button } from "@easy-gif/ui/button";
+import { PresetRow } from "@easy-gif/ui/preset-row";
+import { inputCls } from "@easy-gif/ui/toggle-row";
 import type { TextLayer, TextPreset } from "@/lib/types";
 
 type Props = {

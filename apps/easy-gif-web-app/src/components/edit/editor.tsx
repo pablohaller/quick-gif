@@ -19,7 +19,7 @@ import { Controls, type ControlValues } from "@/components/edit/controls";
 import { TextControls } from "@/components/edit/text-controls";
 import { EstimateButton } from "@/components/edit/estimate-button";
 import { ExportButton } from "@/components/edit/export-button";
-import { Button } from "@/components/ui/button";
+import { Button } from "@easy-gif/ui/button";
 import { HOME } from "@/lib/routes";
 import { FIELD_DEFAULTS, putSettings, type Settings } from "@/lib/settings";
 import type {

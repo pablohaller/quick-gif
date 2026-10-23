@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Download, Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@easy-gif/ui/button";
 import { RenderProgress } from "@/components/edit/render-progress";
 import { runExport } from "@/lib/engine";
 import { resolveName } from "@/lib/naming";

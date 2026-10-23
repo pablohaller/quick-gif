@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@easy-gif/ui/button";
 import { RenderProgress } from "@/components/edit/render-progress";
 import { estimateSize } from "@/lib/engine";
 import type { ExportParams, VideoMeta } from "@/lib/types";

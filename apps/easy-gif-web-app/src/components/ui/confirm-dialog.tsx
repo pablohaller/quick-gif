@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@easy-gif/ui/button";
 import { Modal } from "@/components/ui/modal";
 
 type Props = {

@@ -19,7 +19,7 @@ import { TextControls } from "@/components/edit/text-controls";
 import { EstimateButton } from "@/components/edit/estimate-button";
 import { ExportButton } from "@/components/edit/export-button";
 import { useThumbnails } from "@/components/edit/use-thumbnails";
-import { Button } from "@/components/ui/button";
+import { Button } from "@easy-gif/ui/button";
 import { useSession } from "@/components/studio/session-context";
 import {
   FIELD_DEFAULTS,

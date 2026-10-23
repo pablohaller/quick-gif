@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* Scan the shared UI package for class names (Tailwind ignores node_modules). */
+@source "../../../../packages/ui/src";
+
 /* Monokai Pro palette (token names kept from the original Dracula theme). */
 @theme {
   --color-background: #2d2a2e;

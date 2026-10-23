@@ -1,10 +1,10 @@
 "use client";
 
 import { Save } from "lucide-react";
-import { Accordion } from "@/components/ui/accordion";
-import { Button } from "@/components/ui/button";
-import { PresetRow } from "@/components/ui/preset-row";
-import { ToggleRow, inputCls, selectCls } from "@/components/ui/toggle-row";
+import { Accordion } from "@easy-gif/ui/accordion";
+import { Button } from "@easy-gif/ui/button";
+import { PresetRow } from "@easy-gif/ui/preset-row";
+import { ToggleRow, inputCls, selectCls } from "@easy-gif/ui/toggle-row";
 import type {
   ColorFilter,
   ColorFilterMode,
