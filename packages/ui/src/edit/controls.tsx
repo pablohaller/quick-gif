@@ -10,7 +10,7 @@ import type {
   ColorFilterMode,
   FilterPreset,
   OutputFormat,
-} from "@easy-gif/core";
+} from "@quick-gif/core";
 
 type Toggle<T> = { enabled: boolean; value: T };
 

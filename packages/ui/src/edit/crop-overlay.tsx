@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef } from "react";
-import type { CropRect } from "@easy-gif/core";
+import type { CropRect } from "@quick-gif/core";
 
 type Props = {
   crop: CropRect | null;

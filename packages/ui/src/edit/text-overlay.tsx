@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef } from "react";
-import type { TextLayer } from "@easy-gif/core";
+import type { TextLayer } from "@quick-gif/core";
 
 type Props = {
   layers: TextLayer[];

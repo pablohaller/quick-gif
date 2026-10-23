@@ -5,7 +5,7 @@ import { Accordion } from "../accordion";
 import { Button } from "../button";
 import { PresetRow } from "../preset-row";
 import { inputCls } from "../toggle-row";
-import type { TextLayer, TextPreset } from "@easy-gif/core";
+import type { TextLayer, TextPreset } from "@quick-gif/core";
 
 type Props = {
   layers: TextLayer[];

@@ -3,7 +3,7 @@
 import { forwardRef } from "react";
 import { CropOverlay } from "./crop-overlay";
 import { TextOverlay } from "./text-overlay";
-import type { ColorFilter, CropRect, MediaMeta, TextLayer } from "@easy-gif/core";
+import type { ColorFilter, CropRect, MediaMeta, TextLayer } from "@quick-gif/core";
 
 type Props = {
   // Only width/height are read (aspect ratio); MediaMeta covers both apps' metas.

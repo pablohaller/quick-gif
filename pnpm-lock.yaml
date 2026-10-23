@@ -44,14 +44,8 @@ importers:
 
   .: {}
 
-  apps/easy-gif-wasm-web:
+  apps/quick-gif-wasm-web:
     dependencies:
-      '@easy-gif/core':
-        specifier: workspace:*
-        version: link:../../packages/core
-      '@easy-gif/ui':
-        specifier: workspace:*
-        version: link:../../packages/ui
       '@ffmpeg/core':
         specifier: 0.12.10
         version: 0.12.10
@@ -61,6 +55,12 @@ importers:
       '@ffmpeg/util':
         specifier: ^0.12.2
         version: 0.12.2
+      '@quick-gif/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@quick-gif/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
       lucide-react:
         specifier: 'catalog:'
         version: 1.61.0(@types/react@19.3.0)(react@19.3.0)
@@ -96,12 +96,12 @@ importers:
         specifier: 'catalog:'
         version: 5.9.3
 
-  apps/easy-gif-web-app:
+  apps/quick-gif-web-app:
     dependencies:
-      '@easy-gif/core':
+      '@quick-gif/core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@easy-gif/ui':
+      '@quick-gif/ui':
         specifier: workspace:*
         version: link:../../packages/ui
       lucide-react:
@@ -151,7 +151,7 @@ importers:
 
   packages/ui:
     dependencies:
-      '@easy-gif/core':
+      '@quick-gif/core':
         specifier: workspace:*
         version: link:../core
       lucide-react:

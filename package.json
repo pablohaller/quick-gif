@@ -1,13 +1,13 @@
 {
-  "name": "easy-gif",
+  "name": "quick-gif",
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "dev:web": "pnpm --filter easy-gif-web-app dev",
-    "dev:wasm": "pnpm --filter easy-gif-wasm-web dev",
+    "dev:web": "pnpm --filter quick-gif-web-app dev",
+    "dev:wasm": "pnpm --filter quick-gif-wasm-web dev",
     "build": "pnpm -r build",
-    "build:web": "pnpm --filter easy-gif-web-app build",
-    "build:wasm": "pnpm --filter easy-gif-wasm-web build"
+    "build:web": "pnpm --filter quick-gif-web-app build",
+    "build:wasm": "pnpm --filter quick-gif-wasm-web build"
   },
   "packageManager": "pnpm@10.7.0"
 }

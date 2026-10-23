@@ -29,7 +29,7 @@ yarn-error.log*
 next-env.d.ts
 
 # local runtime config (native app reads this from its own cwd)
-apps/easy-gif-web-app/giffer.config.json
+apps/quick-gif-web-app/giffer.config.json
 
 # thumbnail / metadata cache
 .giffer-cache/
