@@ -9,6 +9,7 @@
     "./*": "./src/*.tsx"
   },
   "dependencies": {
+    "@easy-gif/core": "workspace:*",
     "lucide-react": "catalog:"
   },
   "peerDependencies": {

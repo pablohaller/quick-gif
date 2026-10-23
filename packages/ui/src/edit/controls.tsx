@@ -1,16 +1,16 @@
 "use client";
 
 import { Save } from "lucide-react";
-import { Accordion } from "@easy-gif/ui/accordion";
-import { Button } from "@easy-gif/ui/button";
-import { PresetRow } from "@easy-gif/ui/preset-row";
-import { ToggleRow, inputCls, selectCls } from "@easy-gif/ui/toggle-row";
+import { Accordion } from "../accordion";
+import { Button } from "../button";
+import { PresetRow } from "../preset-row";
+import { ToggleRow, inputCls, selectCls } from "../toggle-row";
 import type {
   ColorFilter,
   ColorFilterMode,
   FilterPreset,
   OutputFormat,
-} from "@/lib/types";
+} from "@easy-gif/core";
 
 type Toggle<T> = { enabled: boolean; value: T };
 

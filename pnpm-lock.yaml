@@ -151,6 +151,9 @@ importers:
 
   packages/ui:
     dependencies:
+      '@easy-gif/core':
+        specifier: workspace:*
+        version: link:../core
       lucide-react:
         specifier: 'catalog:'
         version: 1.61.0(@types/react@19.3.0)(react@19.3.1)

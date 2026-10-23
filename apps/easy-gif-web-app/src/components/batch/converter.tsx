@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Controls, type ControlValues } from "@/components/edit/controls";
+import { Controls, type ControlValues } from "@easy-gif/ui/edit/controls";
 import { Button } from "@easy-gif/ui/button";
 import { FIELD_DEFAULTS, type Settings } from "@/lib/settings";
 import type { ExportParams, ExportResult, VideoMeta } from "@/lib/types";

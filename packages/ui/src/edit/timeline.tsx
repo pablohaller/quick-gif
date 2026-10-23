@@ -9,7 +9,7 @@ import {
   ZoomIn,
   ZoomOut,
 } from "lucide-react";
-import { formatTime } from "@/lib/time";
+import { formatTime } from "@easy-gif/core";
 
 type Props = {
   duration: number;

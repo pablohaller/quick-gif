@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Download, Loader2 } from "lucide-react";
 import { Button } from "@easy-gif/ui/button";
-import { RenderProgress } from "@/components/edit/render-progress";
+import { RenderProgress } from "@easy-gif/ui/edit/render-progress";
 import { runExport } from "@/lib/engine";
 import { resolveName } from "@/lib/naming";
 import type { ExportParams, ExportResult, VideoMeta } from "@/lib/types";

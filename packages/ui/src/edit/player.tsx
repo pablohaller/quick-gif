@@ -1,13 +1,14 @@
 "use client";
 
 import { forwardRef } from "react";
-import { CropOverlay } from "@/components/edit/crop-overlay";
-import { TextOverlay } from "@/components/edit/text-overlay";
-import type { ColorFilter, CropRect, TextLayer, VideoMeta } from "@/lib/types";
+import { CropOverlay } from "./crop-overlay";
+import { TextOverlay } from "./text-overlay";
+import type { ColorFilter, CropRect, MediaMeta, TextLayer } from "@easy-gif/core";
 
 type Props = {
-  meta: VideoMeta;
-  // Object URL for the uploaded video (created in the Studio).
+  // Only width/height are read (aspect ratio); MediaMeta covers both apps' metas.
+  meta: MediaMeta;
+  // Object URL (wasm app) or streaming route URL (native app) for the video.
   src: string;
   crop: CropRect | null;
   onCrop: (crop: CropRect | null) => void;

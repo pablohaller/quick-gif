@@ -13,10 +13,10 @@ import {
   Play,
   RotateCcw,
 } from "lucide-react";
-import { Player } from "@/components/edit/player";
-import { Timeline } from "@/components/edit/timeline";
-import { Controls, type ControlValues } from "@/components/edit/controls";
-import { TextControls } from "@/components/edit/text-controls";
+import { Player } from "@easy-gif/ui/edit/player";
+import { Timeline } from "@easy-gif/ui/edit/timeline";
+import { Controls, type ControlValues } from "@easy-gif/ui/edit/controls";
+import { TextControls } from "@easy-gif/ui/edit/text-controls";
 import { EstimateButton } from "@/components/edit/estimate-button";
 import { ExportButton } from "@/components/edit/export-button";
 import { Button } from "@easy-gif/ui/button";

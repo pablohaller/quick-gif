@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { Button } from "@easy-gif/ui/button";
-import { RenderProgress } from "@/components/edit/render-progress";
+import { RenderProgress } from "@easy-gif/ui/edit/render-progress";
 import { streamSSE } from "@/lib/sse";
 import type { ExportParams } from "@/lib/types";
 
