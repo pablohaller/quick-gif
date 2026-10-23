@@ -1,0 +1,13 @@
+{
+  "name": "easy-gif",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev:web": "pnpm --filter easy-gif-web-app dev",
+    "dev:wasm": "pnpm --filter easy-gif-wasm-web dev",
+    "build": "pnpm -r build",
+    "build:web": "pnpm --filter easy-gif-web-app build",
+    "build:wasm": "pnpm --filter easy-gif-wasm-web build"
+  },
+  "packageManager": "pnpm@10.7.0"
+}

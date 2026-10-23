@@ -1,0 +1,22 @@
+packages:
+  - apps/*
+  - packages/*
+
+# Single source of truth for shared dependency versions. Apps reference these
+# with "catalog:" so the two apps can never drift onto mismatched React/Next.
+catalog:
+  next: 16.4.2
+  react: 19.3.0
+  react-dom: 19.3.0
+  zod: ^4.6.5
+  lucide-react: ^1.61.0
+  tailwindcss: ^4
+  "@tailwindcss/turbopack": ^4
+  typescript: ^5
+  "@types/node": ^20
+  "@types/react": ^19
+  "@types/react-dom": ^19
+
+ignoredBuiltDependencies:
+  - sharp
+  - unrs-resolver

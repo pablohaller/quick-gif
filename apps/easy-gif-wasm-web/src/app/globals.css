@@ -1,0 +1,24 @@
+@import "tailwindcss";
+
+/* Monokai Pro palette (token names kept from the original Dracula theme). */
+@theme {
+  --color-background: #2d2a2e;
+  --color-current-line: #403e41;
+  --color-foreground: #fcfcfa;
+  --color-comment: #939293;
+  --color-cyan: #78dce8;
+  --color-green: #a9dc76;
+  --color-orange: #fc9867;
+  --color-pink: #ff6188;
+  --color-purple: #ab9df2;
+  --color-red: #ff6188;
+  --color-yellow: #ffd866;
+
+  --font-sans: var(--font-montserrat);
+}
+
+body {
+  background: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
