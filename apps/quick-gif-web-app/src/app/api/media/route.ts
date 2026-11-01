@@ -36,14 +36,27 @@ export const GET = async (request: NextRequest) => {
     return new Response("Not found", { status: 404 });
   }
 
+  // Tie the file stream's lifetime to the request. Hover previews mount and
+  // unmount <video> elements constantly; if we don't destroy the read stream
+  // when the client disconnects, the half-open connection lingers and — under
+  // next dev's ~6-connections-per-host limit — eventually starves navigation
+  // (clicks "do nothing" until a full reload drops the stale sockets).
+  const bodyFor = (opts?: { start: number; end: number }) => {
+    const node = createReadStream(filePath, opts);
+    const abort = () => node.destroy();
+    if (request.signal.aborted) abort();
+    else request.signal.addEventListener("abort", abort, { once: true });
+    node.once("close", () => request.signal.removeEventListener("abort", abort));
+    return Readable.toWeb(node) as ReadableStream;
+  };
+
   const type = MIME[path.extname(name).toLowerCase()] ?? "application/octet-stream";
   const range = request.headers.get("range");
   if (range) {
     const match = /bytes=(\d*)-(\d*)/.exec(range);
     const start = match && match[1] ? Number(match[1]) : 0;
     const end = match && match[2] ? Number(match[2]) : size - 1;
-    const chunk = createReadStream(filePath, { start, end });
-    return new Response(Readable.toWeb(chunk) as ReadableStream, {
+    return new Response(bodyFor({ start, end }), {
       status: 206,
       headers: {
         "Content-Range": `bytes ${start}-${end}/${size}`,
@@ -53,8 +66,7 @@ export const GET = async (request: NextRequest) => {
       },
     });
   }
-  const stream = createReadStream(filePath);
-  return new Response(Readable.toWeb(stream) as ReadableStream, {
+  return new Response(bodyFor(), {
     headers: {
       "Content-Length": String(size),
       "Accept-Ranges": "bytes",

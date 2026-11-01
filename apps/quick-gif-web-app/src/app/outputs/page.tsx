@@ -1,12 +1,22 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { OutputCard } from "@/components/outputs/output-card";
+import { SortSelect, useSortMode } from "@/components/ui/sort-select";
 import type { OutputMeta } from "@/lib/types";
 
 const Page = () => {
   const [outputDir, setOutputDir] = useState("");
   const [outputs, setOutputs] = useState<OutputMeta[]>([]);
+  const [sort, setSort] = useSortMode("quick-gif:sort:outputs");
+
+  const sorted = useMemo(
+    () =>
+      [...outputs].sort((a, b) =>
+        sort === "name" ? a.file.localeCompare(b.file) : b.modifiedAt - a.modifiedAt,
+      ),
+    [outputs, sort],
+  );
 
   const refresh = useCallback(() => {
     fetch("/api/outputs")
@@ -31,16 +41,19 @@ const Page = () => {
 
   return (
     <div className="mx-auto max-w-6xl">
-      <div className="mb-4 flex items-center justify-between">
+      <div className="mb-4 flex items-center justify-between gap-3">
         <h1 className="text-2xl font-bold">Outputs</h1>
-        <span className="truncate text-xs text-comment">{outputDir || "—"}</span>
+        <div className="flex min-w-0 items-center gap-3">
+          {outputs.length > 1 ? <SortSelect value={sort} onChange={setSort} /> : null}
+          <span className="truncate text-xs text-comment">{outputDir || "—"}</span>
+        </div>
       </div>
 
       {outputs.length === 0 ? (
         <p className="text-sm text-comment">No exports yet.</p>
       ) : (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-          {outputs.map((o) => (
+          {sorted.map((o) => (
             <OutputCard key={o.file} o={o} onDelete={remove} />
           ))}
         </div>

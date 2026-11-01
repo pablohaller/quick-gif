@@ -1,9 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { VideoCard } from "@/components/library/video-card";
+import { SortSelect, useSortMode } from "@/components/ui/sort-select";
 import { EDIT, SETTINGS, generateRoute } from "@/lib/routes";
 import type { VideoMeta } from "@/lib/types";
 
@@ -15,7 +16,16 @@ const Page = () => {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [dragActive, setDragActive] = useState(false);
+  const [sort, setSort] = useSortMode("quick-gif:sort:library");
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const sorted = useMemo(
+    () =>
+      [...videos].sort((a, b) =>
+        sort === "name" ? a.name.localeCompare(b.name) : b.modifiedAt - a.modifiedAt,
+      ),
+    [videos, sort],
+  );
 
   const loadLibrary = useCallback(() => {
     fetch("/api/videos")
@@ -118,9 +128,12 @@ const Page = () => {
 
       {/* Directory (watch folder) */}
       <div className="flex flex-col gap-3">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-3">
           <h2 className="font-semibold">Library</h2>
-          <span className="truncate text-xs text-comment">{watchDir || "—"}</span>
+          <div className="flex min-w-0 items-center gap-3">
+            {videos.length > 1 ? <SortSelect value={sort} onChange={setSort} /> : null}
+            <span className="truncate text-xs text-comment">{watchDir || "—"}</span>
+          </div>
         </div>
 
         {!loaded ? (
@@ -137,7 +150,7 @@ const Page = () => {
           <p className="text-sm text-comment">No videos found in the watch folder.</p>
         ) : (
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-            {videos.map((v) => (
+            {sorted.map((v) => (
               <VideoCard key={v.name} v={v} onDelete={removeVideo} />
             ))}
           </div>
